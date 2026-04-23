@@ -9,11 +9,15 @@ class Program
 {
     static bool alarmEnabled = false;
     static int targetTemperature = 18;
+    static int currentTemperature = 20;
 
+    static UdpClient server;
+    static IPEndPoint remote;
 
     static bool running = true;
     static IPAddress myIP = NetworkHelper.GetLocalIPAddress();
     static int port = 1234;
+
     static void Main()
     {
         Thread serverThread = new Thread(Server);
@@ -21,11 +25,15 @@ class Program
 
         serverThread.Start();
         clientThread.Start();
+
+        serverThread.Join();
+        clientThread.Join();
     }
+
     static void Server()
     {
-        UdpClient server = new UdpClient(1234);
-        IPEndPoint remote = new IPEndPoint(IPAddress.Any, 0);
+        server = new UdpClient(1234);
+        remote = new IPEndPoint(IPAddress.Any, 0);
 
         Console.WriteLine($"Сервер запущен на {myIP}:{1234}");
 
@@ -50,13 +58,22 @@ class Program
     static void HandleMessage(string message)
     {
         string[] parts = message.Split('|');
-        if (parts.Length < 3) return;
 
-        string type = parts[0];
+        if (parts[0] == "GET_STATUS")
+        {
+            string status = $"ALARM|{alarmEnabled}|THERMOSTAT|target={targetTemperature},current={currentTemperature}";
+
+            Console.WriteLine($"[SERVER] Отправка статуса: {status}");
+
+            byte[] someData = Encoding.UTF8.GetBytes(status);
+            server.Send(someData, someData.Length, remote);
+            return;
+        }
+
+        if (parts[0] != "COMMAND" || parts.Length < 3) return;
+
         string device = parts[1];
         string data = parts[2];
-
-        if (type != "COMMAND") return;
 
         if (device == "ALARM")
         {
@@ -70,60 +87,10 @@ class Program
         {
             if (data.StartsWith("set="))
             {
-                targetTemperature = int.Parse(data.Split('=')[1]);
+                currentTemperature = int.Parse(data.Split('=')[1]);
             }
 
-            Console.WriteLine($"[SERVER] Target temp = {targetTemperature}");
+            Console.WriteLine($"[SERVER] Target temp = {currentTemperature}");
         }
     }
-
-    static void AlarmSystem()
-    {
-        UdpClient client = new UdpClient();
-        Random rand = new Random();
-
-        bool alarmActive = false;
-
-        while (running)
-        {
-            if (alarmEnabled)
-            {
-                bool motionDetected = rand.Next(0, 10) > 7;
-
-                if (motionDetected && !alarmActive)
-                {
-                    alarmActive = true;
-                    NetworkHelper.Send(client, "ALARM: движение обнаружено", myIP.ToString(), port);
-                }
-            }
-
-            Thread.Sleep(1000);
-        }
-    }
-
-    static void ThermostatSystem()
-    {
-        UdpClient client = new UdpClient();
-        Random rand = new Random();
-
-        int temperature = 20;
-        bool heating = false;
-
-        while (running)
-        {
-            if (temperature < targetTemperature && !heating)
-            {
-                heating = true;
-                NetworkHelper.Send(client, "ТЕРМОСТАТ: обогрев ВКЛ", myIP.ToString(), port);
-            }
-            else if (temperature >= targetTemperature && heating)
-            {
-                heating = false;
-                NetworkHelper.Send(client, "ТЕРМОСТАТ: обогрев ВЫКЛ", myIP.ToString(), port);
-            }
-
-            Thread.Sleep(1000);
-        }
-    }
-
 }
