@@ -61,46 +61,47 @@ namespace ThreadApp
             }
 
             static int Menu(string[] items)
-        {
-            int index = 0;
-            ConsoleKey key;
-
-            do
             {
-                Console.Clear();
-                Console.WriteLine("_Добро пожаловать в систему умный дом!_\n");
+                int index = 0;
+                ConsoleKey key;
 
-                for (int i = 0; i < items.Length; i++)
+                do
                 {
-                    if (i == index)
+                    Console.Clear();
+                    Console.WriteLine("_Добро пожаловать в систему умный дом!_\n");
+
+                    for (int i = 0; i < items.Length; i++)
                     {
-                        Console.ForegroundColor = ConsoleColor.Green;
-                        Console.WriteLine($"> {items[i]}");
-                        Console.ResetColor();
+                        if (i == index)
+                        {
+                            Console.ForegroundColor = ConsoleColor.Green;
+                            Console.WriteLine($"> {items[i]}");
+                            Console.ResetColor();
+                        }
+                        else
+                        {
+                            Console.WriteLine($"  {items[i]}");
+                        }
                     }
-                    else
+
+                    key = Console.ReadKey(true).Key;
+
+                    if (key == ConsoleKey.UpArrow)
                     {
-                        Console.WriteLine($"  {items[i]}");
+                        index--;
+                        if (index < 0) index = items.Length - 1;
                     }
-                }
+                    else if (key == ConsoleKey.DownArrow)
+                    {
+                        index++;
+                        if (index >= items.Length) index = 0;
+                    }
 
-                key = Console.ReadKey(true).Key;
+                } while (key != ConsoleKey.Enter);
 
-                if (key == ConsoleKey.UpArrow)
-                {
-                    index--;
-                    if (index < 0) index = items.Length - 1;
-                }
-                else if (key == ConsoleKey.DownArrow)
-                {
-                    index++;
-                    if (index >= items.Length) index = 0;
-                }
+                return index;
+            }
 
-            } while (key != ConsoleKey.Enter);
-
-            return index;
         }
-
     }
 }
