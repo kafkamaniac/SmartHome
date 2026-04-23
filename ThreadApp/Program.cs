@@ -16,26 +16,11 @@ class Program
     static int port = 1234;
     static void Main()
     {
-        Console.OutputEncoding = Encoding.UTF8;
-
         Thread serverThread = new Thread(Server);
+        Thread clientThread = new Thread(ThreadApp.Client.Run);
+
         serverThread.Start();
-
-
-        Thread alarmThread = new Thread(AlarmSystem);
-        Thread thermostatThread = new Thread(ThermostatSystem);
-
-        alarmThread.Start();
-        thermostatThread.Start();
-
-        Console.WriteLine("Алиса умный дом запущен.");
-        Console.ReadLine();
-
-        running = false;
-
-        serverThread.Join();
-        alarmThread.Join();
-        thermostatThread.Join();
+        clientThread.Start();
     }
     static void Server()
     {
@@ -101,17 +86,15 @@ class Program
 
         while (running)
         {
-            bool motionDetected = rand.Next(0, 10) > 7;
+            if (alarmEnabled)
+            {
+                bool motionDetected = rand.Next(0, 10) > 7;
 
-            if (motionDetected && !alarmActive)
-            {
-                alarmActive = true;
-                NetworkHelper.Send(client, "ALARM: движение обнаружено", myIP.ToString(), port);
-            }
-            else if (!motionDetected && alarmActive)
-            {
-                alarmActive = false;
-                NetworkHelper.Send(client, "ALARM: движения нет", myIP.ToString(), port);
+                if (motionDetected && !alarmActive)
+                {
+                    alarmActive = true;
+                    NetworkHelper.Send(client, "ALARM: движение обнаружено", myIP.ToString(), port);
+                }
             }
 
             Thread.Sleep(1000);
@@ -128,22 +111,15 @@ class Program
 
         while (running)
         {
-            temperature += rand.Next(-1, 2);
-
-            if (temperature < 18 && !heating)
+            if (temperature < targetTemperature && !heating)
             {
                 heating = true;
-                NetworkHelper.Send(client, $"ТЕРМОСТАТ: {temperature} -> ОБОГРЕВ ВКЛ", myIP.ToString(), port);
-                temperature += rand.Next(1, 2);
+                NetworkHelper.Send(client, "ТЕРМОСТАТ: обогрев ВКЛ", myIP.ToString(), port);
             }
-            else if (temperature >= 18 && heating)
+            else if (temperature >= targetTemperature && heating)
             {
                 heating = false;
-                NetworkHelper.Send(client, $"ТЕРМОСТАТ: {temperature} -> ОБОГРЕВ ВЫКЛ", myIP.ToString(), port);
-            }
-            else
-            {
-                NetworkHelper.Send(client, $"ТЕРМОСТАТ: {temperature}", myIP.ToString(), port);
+                NetworkHelper.Send(client, "ТЕРМОСТАТ: обогрев ВЫКЛ", myIP.ToString(), port);
             }
 
             Thread.Sleep(1000);

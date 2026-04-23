@@ -50,7 +50,7 @@ namespace ThreadApp
                     case 2:
                         Console.Write("\nВведите температуру: ");
                         string temp = Console.ReadLine();
-                        message = $"COMMAND|THERMOSTAT|set{temp}";
+                        message = $"COMMAND|THERMOSTAT|set={temp}";
                         break;
 
                     case 3:
