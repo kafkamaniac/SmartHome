@@ -26,9 +26,22 @@ namespace ThreadApp
 
             string[] menuItems =
             {
-                "Включить сигнализацию",
-                "Выключить сигнализацию",
+                "Сигнализация ВКЛ",
+                "Сигнализация ВЫКЛ",
                 "Установить температуру",
+
+                "Свет ВКЛ",
+                "Свет ВЫКЛ",
+                "Установить яркость",
+
+                "Шторы открыть",
+                "Шторы закрыть",
+                "Шторы наполовину",
+
+                "Увлажнитель ВКЛ",
+                "Увлажнитель ВЫКЛ",
+                "Установить влажность",
+
                 "Показать состояние устройств",
                 "Выход"
             };
@@ -44,27 +57,64 @@ namespace ThreadApp
                 {
                     case 0:
                         message = "COMMAND|ALARM|on";
-                        needResponse = false;
                         break;
 
                     case 1:
                         message = "COMMAND|ALARM|off";
-                        needResponse = false;
                         break;
 
                     case 2:
                         Console.Write("\nВведите температуру: ");
                         string temp = Console.ReadLine();
                         message = $"COMMAND|THERMOSTAT|set={temp}";
-                        needResponse = false;
                         break;
 
                     case 3:
+                        message = "COMMAND|LIGHT|on";
+                        break;
+
+                    case 4:
+                        message = "COMMAND|LIGHT|off";
+                        break;
+
+                    case 5:
+                        Console.Write("\nВведите яркость (0–100): ");
+                        string bright = Console.ReadLine();
+                        message = $"COMMAND|LIGHT|brightness={bright}";
+                        break;
+
+                    case 6:
+                        message = "COMMAND|CURTAIN|open";
+                        break;
+
+                    case 7:
+                        message = "COMMAND|CURTAIN|closed";
+                        break;
+
+                    case 8:
+                        message = "COMMAND|CURTAIN|half_open";
+                        break;
+
+                    case 9:
+                        message = "COMMAND|HUMIDIFIER|on";
+                        break;
+
+                    case 10:
+                        message = "COMMAND|HUMIDIFIER|off";
+                        break;
+
+                    case 11:
+                        Console.Write("\nВведите влажность (30–80): ");
+                        string hum = Console.ReadLine();
+                        message = $"COMMAND|HUMIDIFIER|humidity={hum}";
+                        break;
+
+                    case 12:
                         message = "GET_STATUS";
                         needResponse = true;
                         break;
 
-                    case 4:
+                    case 13:
                         return;
                 }
 
@@ -95,6 +145,30 @@ namespace ThreadApp
                                 string current = thermostatData[1].Split('=')[1];
                                 Console.WriteLine($"Целевая температура: {target}");
                                 Console.WriteLine($"Текущая температура: {current}");
+                            }
+
+                            if (parts[i] == "LIGHT")
+                            {
+                                string[] data = parts[i + 1].Split(',');
+                                bool on = bool.Parse(data[0].Split('=')[1]);
+                                string brightness = data[1].Split('=')[1];
+
+                                Console.WriteLine($"Свет: {(on ? "ВКЛ" : "ВЫКЛ")}, яркость {brightness}");
+                            }
+
+                            if (parts[i] == "CURTAIN")
+                            {
+                                string pos = parts[i + 1].Split('=')[1];
+                                Console.WriteLine($"Шторы: {pos}");
+                            }
+
+                            if (parts[i] == "HUMIDIFIER")
+                            {
+                                string[] data = parts[i + 1].Split(',');
+                                bool on = bool.Parse(data[0].Split('=')[1]);
+                                string hum = data[1].Split('=')[1];
+
+                                Console.WriteLine($"Увлажнитель: {(on ? "ВКЛ" : "ВЫКЛ")}, влажность {hum}");
                             }
                         }
                         Console.WriteLine("===========================");
